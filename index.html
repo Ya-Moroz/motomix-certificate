@@ -110,7 +110,7 @@
 
         .cert-amount {
             position: absolute;
-            top: 62%; left: 50%; 
+            top: 63%; left: 50%; 
             transform: translate(-50%, -50%); 
             font-size: 6.5vw; 
             font-weight: 700;
@@ -224,11 +224,11 @@
                 const dateText = document.getElementById('certDate').innerText;
 
                 // 2. Рисуем сумму (по центру)
-                ctx.font = '700 250px Rubik'; // Жирный, размер 280
+                ctx.font = '700 300px Rubik'; // Жирный, размер 280
                 ctx.fillStyle = '#ffffff';
                 ctx.textAlign = 'center';
                 ctx.textBaseline = 'middle';
-                ctx.fillText(amountText, canvas.width / 2, canvas.height * 0.55);
+                ctx.fillText(amountText, canvas.width / 2, canvas.height * 0.62);
 
                 // 3. Рисуем номер (внизу слева)
                 ctx.font = '400 42px Rubik'; // Обычный, размер 42
