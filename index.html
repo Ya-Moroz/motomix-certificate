@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Генератор Сертификатов | MotoMix</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Rubik:ital,wght@0,300..900;1,300..900&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: 'Rubik', sans-serif;
+            background-color: #1a1a1c;
+            color: #fff;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            box-sizing: border-box;
+        }
+
+        /* Панель управления */
+        .admin-panel {
+            background-color: #262629;
+            padding: 20px;
+            width: 100%;
+            max-width: 900px;
+            box-sizing: border-box;
+            margin-bottom: 30px;
+            border-radius: 8px;
+            display: flex;
+            gap: 20px;
+            align-items: center;
+            justify-content: space-between;
+            border: 1px solid #3a3a3d;
+            flex-wrap: wrap;
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        label {
+            font-size: 12px;
+            color: #aaa;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: 500;
+        }
+
+        input {
+            padding: 10px;
+            background-color: #1a1a1c;
+            border: 1px solid #4a4a4d;
+            color: #fff;
+            font-size: 16px;
+            border-radius: 4px;
+            width: 150px;
+            font-family: 'Rubik', sans-serif;
+            font-weight: 500;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 10px;
+        }
+
+        button {
+            padding: 12px 25px;
+            background-color: #ff4500;
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+            font-family: 'Rubik', sans-serif;
+        }
+
+        button:hover {
+            background-color: #e03d00;
+        }
+
+        .btn-secondary {
+            background-color: #444;
+        }
+        .btn-secondary:hover {
+            background-color: #555;
+        }
+
+        /* Контейнер предпросмотра сертификата */
+        .preview-container {
+            width: 100%;
+            max-width: 900px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.6);
+        }
+
+        /* Сама область сертификата (Пропорции А4) */
+        .certificate-wrapper {
+            width: 100%;
+            aspect-ratio: 3508 / 2480;
+            position: relative;
+            background-image: url('certificate-bg.jpg'); /* Файл фона */
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            background-color: #111;
+            overflow: hidden;
+        }
+
+        /* ==========================================================================
+           НАСТРОЙКА ПОЗИЦИЙ ДИНАМИЧЕСКИХ ДАННЫХ
+           ========================================================================== */
+        
+        .cert-amount {
+            position: absolute;
+            top: 45%; 
+            left: 50%; 
+            transform: translate(-50%, -50%); 
+            font-size: 8vw; /* Размер шрифта адаптивный для экрана */
+            font-weight: 700;
+            color: #ffffff;
+            white-space: nowrap;
+        }
+
+        .cert-number {
+            position: absolute;
+            bottom: 5%; 
+            left: 5%; 
+            font-size: 1.2vw;
+            color: #77777c; 
+            font-weight: 400;
+            letter-spacing: 1px;
+        }
+
+        .cert-date {
+            position: absolute;
+            bottom: 5%; 
+            right: 5%; 
+            font-size: 1.2vw;
+            color: #a0a0a5;
+            font-weight: 400;
+            letter-spacing: 1px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="admin-panel">
+        <div class="input-group">
+            <label for="amountInput">Сумма (₽)</label>
+            <input type="text" id="amountInput" value="3 000">
+        </div>
+        
+        <div class="btn-group">
+            <button class="btn-secondary" onclick="generateNewData()">Обновить номер</button>
+            <button onclick="downloadJPEG()">Скачать JPEG</button>
+        </div>
+    </div>
+
+    <div class="preview-container">
+        <div class="certificate-wrapper" id="certBlock">
+            <div class="cert-amount" id="certAmount">3 000 ₽</div>
+            <div class="cert-number" id="certNumber">№ MM-2026-0000</div>
+            <div class="cert-date" id="certDate">Действителен до: --.--.----</div>
+        </div>
+    </div>
+
+    <script>
+        function formatDate(date) {
+            let dd = String(date.getDate()).padStart(2, '0');
+            let mm = String(date.getMonth() + 1).padStart(2, '0');
+            let yyyy = date.getFullYear();
+            return `${dd}.${mm}.${yyyy}`;
+        }
+
+        function generateId() {
+            const chars = '0123456789';
+            let randomPart = '';
+            for (let i = 0; i < 4; i++) {
+                randomPart += chars.charAt(Math.floor(Math.random() * chars.length));
+            }
+            const currentYear = new Date().getFullYear();
+            return `№ MM-${currentYear}-${randomPart}`;
+        }
+
+        function updateCertificate() {
+            let amountVal = document.getElementById('amountInput').value;
+            if (!amountVal.includes('₽')) {
+                document.getElementById('certAmount').innerText = amountVal + ' ₽';
+            } else {
+                document.getElementById('certAmount').innerText = amountVal;
+            }
+
+            let expDate = new Date();
+            expDate.setMonth(expDate.getMonth() + 2);
+            document.getElementById('certDate').innerText = `Действителен до: ${formatDate(expDate)}`;
+        }
+
+        function generateNewData() {
+            document.getElementById('certNumber').innerText = generateId();
+            updateCertificate();
+        }
+
+        // --- Функция сохранения в JPEG ---
+        function downloadJPEG() {
+            const certNode = document.getElementById('certBlock');
+            
+            // Вычисляем коэффициент масштабирования, чтобы итоговый файл был ровно 3508px в ширину
+            const currentWidth = certNode.offsetWidth;
+            const targetWidth = 3508;
+            const scaleFactor = targetWidth / currentWidth;
+
+            // Временно меняем текст кнопки
+            const btn = document.querySelector('button[onclick="downloadJPEG()"]');
+            const originalText = btn.innerText;
+            btn.innerText = 'Генерация...';
+            btn.disabled = true;
+
+            html2canvas(certNode, {
+                scale: scaleFactor, // Принудительно задаем целевое разрешение
+                useCORS: true,      // Разрешаем использовать внешние картинки
+                backgroundColor: '#111111'
+            }).then(canvas => {
+                // Создаем виртуальную ссылку для скачивания
+                const link = document.createElement('a');
+                
+                // Формируем имя файла из сгенерированного номера (например: MotoMix-MM-2026-1234.jpg)
+                const certNumClean = document.getElementById('certNumber').innerText.replace('№ ', '');
+                link.download = `MotoMix-${certNumClean}.jpg`;
+                
+                // Превращаем холст в JPEG с качеством 95%
+                link.href = canvas.toDataURL('image/jpeg', 0.95);
+                
+                // Программно кликаем по ссылке
+                link.click();
+
+                // Возвращаем кнопку в исходное состояние
+                btn.innerText = originalText;
+                btn.disabled = false;
+            }).catch(err => {
+                alert('Произошла ошибка при генерации картинки: ' + err);
+                btn.innerText = originalText;
+                btn.disabled = false;
+            });
+        }
+
+        document.getElementById('amountInput').addEventListener('input', updateCertificate);
+
+        window.onload = function() {
+            generateNewData();
+        };
+    </script>
+</body>
+</html>
