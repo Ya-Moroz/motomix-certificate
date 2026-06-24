@@ -32,7 +32,7 @@
             border-radius: 8px;
             display: flex;
             gap: 20px;
-            align-items: flex-end; /* Выравниваем элементы по нижнему краю */
+            align-items: flex-end; 
             justify-content: space-between;
             border: 1px solid #3a3a3d;
             flex-wrap: wrap;
@@ -58,7 +58,7 @@
             font-weight: 500;
         }
 
-        input {
+        input, textarea {
             padding: 10px;
             background-color: #1a1a1c;
             border: 1px solid #4a4a4d;
@@ -68,6 +68,13 @@
             width: 150px;
             font-family: 'Rubik', sans-serif;
             font-weight: 500;
+            box-sizing: border-box;
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 41px;
+            width: 180px;
         }
         
         /* Стилизация иконки календаря для светлых браузеров */
@@ -92,7 +99,7 @@
             cursor: pointer;
             transition: background 0.2s;
             font-family: 'Rubik', sans-serif;
-            height: 41px; /* Чтобы кнопки были одной высоты с полями ввода */
+            height: 41px; 
         }
 
         button:hover { background-color: #e03d00; }
@@ -128,7 +135,10 @@
             font-size: 6.5vw; 
             font-weight: 700;
             color: #ffffff;
-            white-space: nowrap;
+            /* Разрешаем перенос строк и центрируем текст */
+            white-space: pre-wrap; 
+            text-align: center;
+            line-height: 1.1;
             z-index: 2; 
         }
 
@@ -158,10 +168,15 @@
     <div class="admin-panel">
         <div class="inputs-wrapper">
             <div class="input-group">
-                <label for="amountInput">Сумма (₽)</label>
-                <input type="text" id="amountInput" value="3 000 ₽">
+                <label for="amountInput">Текст / Сумма</label>
+                <textarea id="amountInput" rows="2">3 000 ₽</textarea>
             </div>
             
+            <div class="input-group">
+                <label for="fontSizeInput">Размер шрифта (px)</label>
+                <input type="number" id="fontSizeInput" value="380" step="10">
+            </div>
+
             <div class="input-group">
                 <label for="dateInput">Действует до</label>
                 <input type="date" id="dateInput">
@@ -195,12 +210,10 @@
             return `№ MM-${currentYear}-${randomPart}`;
         }
         
-        // Устанавливаем дату "Сегодня + 2 месяца" по умолчанию в поле календаря
         function setDefaultDate() {
             let expDate = new Date();
             expDate.setMonth(expDate.getMonth() + 2);
             
-            // Формат для input type="date" должен быть строго YYYY-MM-DD
             let yyyy = expDate.getFullYear();
             let mm = String(expDate.getMonth() + 1).padStart(2, '0');
             let dd = String(expDate.getDate()).padStart(2, '0');
@@ -209,18 +222,20 @@
         }
 
         function updateCertificate() {
-            // 1. Обновляем сумму
+            // 1. Обновляем сумму/текст
             let amountVal = document.getElementById('amountInput').value;
-            if (!amountVal.includes('₽')) {
-                document.getElementById('certAmount').innerText = amountVal;
-            } else {
-                document.getElementById('certAmount').innerText = amountVal;
-            }
+            let certAmountEl = document.getElementById('certAmount');
+            certAmountEl.innerText = amountVal;
 
-            // 2. Обновляем дату, беря её из поля ввода
+            // 2. Обновляем размер шрифта в превью
+            let fontSizePx = document.getElementById('fontSizeInput').value || 380;
+            // Пропорция: 380px на оригинальном холсте равнялось 6.5vw. Вычисляем новый vw.
+            let scaledVw = (fontSizePx / 380) * 6.5; 
+            certAmountEl.style.fontSize = `${scaledVw}vw`;
+
+            // 3. Обновляем дату
             let dateVal = document.getElementById('dateInput').value;
             if (dateVal) {
-                // Превращаем YYYY-MM-DD обратно в красивый русский DD.MM.YYYY
                 let parts = dateVal.split('-');
                 document.getElementById('certDate').innerText = `Действителен до: ${parts[2]}.${parts[1]}.${parts[0]}`;
             }
@@ -246,22 +261,39 @@
                 const img = document.getElementById('bgImage');
                 ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
 
-                const amountText = document.getElementById('certAmount').innerText;
+                // Получаем актуальные данные
+                const amountText = document.getElementById('amountInput').value;
+                const fontSizePx = document.getElementById('fontSizeInput').value || 380;
                 const numberText = document.getElementById('certNumber').innerText;
                 const dateText = document.getElementById('certDate').innerText;
 
-                ctx.font = '700 380px Rubik';
+                // --- Отрисовка многострочного текста Суммы ---
+                ctx.font = `700 ${fontSizePx}px Rubik`;
                 ctx.fillStyle = '#ffffff';
                 ctx.textAlign = 'center';
                 ctx.textBaseline = 'middle';
-                ctx.fillText(amountText, canvas.width / 2, canvas.height * 0.645);
 
+                const lines = amountText.split('\n'); // Разбиваем по переносам строки
+                const lineHeight = fontSizePx * 1.1; // Межстрочный интервал (110% от размера шрифта)
+                
+                // Вычисляем стартовую Y-позицию, чтобы блок текста был отцентрирован по вертикали
+                const totalTextHeight = (lines.length - 1) * lineHeight;
+                let startY = (canvas.height * 0.645) - (totalTextHeight / 2);
+
+                // Отрисовываем каждую строку
+                lines.forEach((line, index) => {
+                    ctx.fillText(line, canvas.width / 2, startY + (index * lineHeight));
+                });
+                // ---------------------------------------------
+
+                // Отрисовка номера
                 ctx.font = '400 42px Rubik';
                 ctx.fillStyle = '#77777c';
                 ctx.textAlign = 'left';
                 ctx.textBaseline = 'bottom';
                 ctx.fillText(numberText, canvas.width * 0.05, canvas.height * 0.95);
 
+                // Отрисовка даты
                 ctx.font = '400 42px Rubik';
                 ctx.fillStyle = '#77777c';
                 ctx.textAlign = 'right';
@@ -283,13 +315,14 @@
             btn.disabled = false;
         }
 
-        // Слушаем изменения в обоих полях ввода
+        // Слушаем изменения во всех полях ввода
         document.getElementById('amountInput').addEventListener('input', updateCertificate);
+        document.getElementById('fontSizeInput').addEventListener('input', updateCertificate);
         document.getElementById('dateInput').addEventListener('input', updateCertificate);
 
         window.onload = function() {
-            setDefaultDate(); // Сначала ставим дату в календарь
-            generateNewData(); // Затем генерируем номер и отрисовываем всё на экране
+            setDefaultDate(); 
+            generateNewData(); 
         };
     </script>
 </body>
