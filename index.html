@@ -135,8 +135,11 @@
             font-size: 6.5vw; 
             font-weight: 700;
             color: #ffffff;
-            /* Разрешаем перенос строк и центрируем текст */
-            white-space: pre-wrap; 
+            
+            /* ИЗМЕНЕНИЕ ЗДЕСЬ: 'pre' вместо 'pre-wrap' */
+            /* Текст будет переноситься ТОЛЬКО по нажатию Enter в редакторе */
+            white-space: pre; 
+            
             text-align: center;
             line-height: 1.1;
             z-index: 2; 
@@ -222,18 +225,14 @@
         }
 
         function updateCertificate() {
-            // 1. Обновляем сумму/текст
             let amountVal = document.getElementById('amountInput').value;
             let certAmountEl = document.getElementById('certAmount');
-            certAmountEl.innerText = amountVal;
+            certAmountEl.textContent = amountVal; 
 
-            // 2. Обновляем размер шрифта в превью
             let fontSizePx = document.getElementById('fontSizeInput').value || 380;
-            // Пропорция: 380px на оригинальном холсте равнялось 6.5vw. Вычисляем новый vw.
             let scaledVw = (fontSizePx / 380) * 6.5; 
             certAmountEl.style.fontSize = `${scaledVw}vw`;
 
-            // 3. Обновляем дату
             let dateVal = document.getElementById('dateInput').value;
             if (dateVal) {
                 let parts = dateVal.split('-');
@@ -261,39 +260,32 @@
                 const img = document.getElementById('bgImage');
                 ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
 
-                // Получаем актуальные данные
                 const amountText = document.getElementById('amountInput').value;
                 const fontSizePx = document.getElementById('fontSizeInput').value || 380;
                 const numberText = document.getElementById('certNumber').innerText;
                 const dateText = document.getElementById('certDate').innerText;
 
-                // --- Отрисовка многострочного текста Суммы ---
                 ctx.font = `700 ${fontSizePx}px Rubik`;
                 ctx.fillStyle = '#ffffff';
                 ctx.textAlign = 'center';
                 ctx.textBaseline = 'middle';
 
-                const lines = amountText.split('\n'); // Разбиваем по переносам строки
-                const lineHeight = fontSizePx * 1.1; // Межстрочный интервал (110% от размера шрифта)
+                const lines = amountText.split('\n'); 
+                const lineHeight = fontSizePx * 1.1; 
                 
-                // Вычисляем стартовую Y-позицию, чтобы блок текста был отцентрирован по вертикали
                 const totalTextHeight = (lines.length - 1) * lineHeight;
                 let startY = (canvas.height * 0.645) - (totalTextHeight / 2);
 
-                // Отрисовываем каждую строку
                 lines.forEach((line, index) => {
                     ctx.fillText(line, canvas.width / 2, startY + (index * lineHeight));
                 });
-                // ---------------------------------------------
 
-                // Отрисовка номера
                 ctx.font = '400 42px Rubik';
                 ctx.fillStyle = '#77777c';
                 ctx.textAlign = 'left';
                 ctx.textBaseline = 'bottom';
                 ctx.fillText(numberText, canvas.width * 0.05, canvas.height * 0.95);
 
-                // Отрисовка даты
                 ctx.font = '400 42px Rubik';
                 ctx.fillStyle = '#77777c';
                 ctx.textAlign = 'right';
@@ -315,7 +307,6 @@
             btn.disabled = false;
         }
 
-        // Слушаем изменения во всех полях ввода
         document.getElementById('amountInput').addEventListener('input', updateCertificate);
         document.getElementById('fontSizeInput').addEventListener('input', updateCertificate);
         document.getElementById('dateInput').addEventListener('input', updateCertificate);
