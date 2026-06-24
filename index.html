@@ -212,7 +212,7 @@
             // 1. Обновляем сумму
             let amountVal = document.getElementById('amountInput').value;
             if (!amountVal.includes('₽')) {
-                document.getElementById('certAmount').innerText = amountVal + ' ₽';
+                document.getElementById('certAmount').innerText = amountVal;
             } else {
                 document.getElementById('certAmount').innerText = amountVal;
             }
